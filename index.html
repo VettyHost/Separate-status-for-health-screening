@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Screening Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            min-width: 100px;
+        }
+        
+        .status-in-progress { background-color: #2563eb; color: white; }
+        .status-coi-expired { background-color: #f97316; color: white; }
+        .status-reviewed { background-color: #10b981; color: white; }
+        .status-adverse { background-color: #ef4444; color: white; }
+        .status-review-needed { background-color: #fbbf24; color: white; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        .drawer-overlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            transition: opacity 0.3s ease;
+        }
+        
+        .drawer {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .drawer.open { transform: translateX(0); }
+
+        .status-text-clear { color: #2563eb; }
+        .status-text-review { color: #f97316; }
+        .status-text-unable { color: #9ca3af; }
+        .status-text-canceled { color: #ef4444; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Header / Navbar -->
+    <div class="flex justify-end items-center mb-6 bg-white p-4 rounded-lg shadow-sm space-x-6">
+        <!-- Notification Area -->
+        <div class="relative cursor-pointer">
+            <i class="fas fa-bell text-gray-400 text-xl"></i>
+            <!-- Red badge only shown if count > 0 -->
+            <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1 hidden">0</span>
+        </div>
+
+        <!-- Profile Section: Extreme Right of Bell Icon -->
+        <div class="flex items-center space-x-3 cursor-pointer border-l border-gray-100 pl-6">
+            <span class="font-medium text-gray-700 text-sm">Debendu Roy</span>
+            <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">DR</div>
+            <i class="fas fa-chevron-down text-gray-400 text-[10px]"></i>
+        </div>
+    </div>
+
+    <!-- Main Card Container -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        
+        <!-- Filters Area -->
+        <div class="p-6 border-b border-gray-100">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Filter:</label>
+                    <select class="w-full border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                        <option>All Packages</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">User:</label>
+                    <select class="w-full border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                        <option>All Users</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Department:</label>
+                    <input type="text" placeholder="Search Department name" class="w-full border border-gray-200 rounded p-2 text-sm bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Location:</label>
+                    <select class="w-full border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                        <option>Select Location</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <input type="text" placeholder="Search Candidates" class="border border-gray-200 rounded p-2 text-sm bg-gray-50">
+                <input type="text" placeholder="Search Order ID" class="border border-gray-200 rounded p-2 text-sm bg-gray-50">
+                <input type="text" placeholder="Search Email" class="border border-gray-200 rounded p-2 text-sm bg-gray-50">
+                <select class="border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                    <option>Covid 19 Vaccination Status</option>
+                </select>
+                <select class="border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                    <option>Staged Check</option>
+                </select>
+            </div>
+            
+            <div class="mt-4">
+                <select class="w-48 border border-gray-200 rounded p-2 text-sm text-gray-600 bg-gray-50">
+                    <option>Screening Tags</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="flex overflow-x-auto border-b border-gray-100 bg-white">
+            <button class="px-6 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 whitespace-nowrap">All Candidates</button>
+            <button class="px-6 py-3 text-xs font-bold text-gray-500 whitespace-nowrap">Pending Candidate (8)</button>
+            <button class="px-6 py-3 text-xs font-bold text-blue-500 whitespace-nowrap">Check In Progress (29)</button>
+            <button class="px-6 py-3 text-xs font-bold text-orange-500 whitespace-nowrap">Review Needed (2)</button>
+            <button class="px-6 py-3 text-xs font-bold text-green-600 whitespace-nowrap">Ready For Onboarding (1)</button>
+            <button class="px-6 py-3 text-xs font-bold text-red-500 whitespace-nowrap">Alerts (20)</button>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase tracking-wider font-semibold">
+                        <th class="p-3 w-8"><input type="checkbox" class="rounded"></th>
+                        <th class="p-3">Candidate</th>
+                        <th class="p-3">Order ID</th>
+                        <th class="p-3">Last Run <i class="fas fa-arrow-down ml-1"></i></th>
+                        <th class="p-3">Date Added</th>
+                        <th class="p-3">Expected Em...</th>
+                        <th class="p-3">Created By</th>
+                        <th class="p-3">Package</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3 text-center">Health Screening</th>
+                        <th class="p-3">Staged Check</th>
+                        <th class="p-3">Alerts</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="candidateTableBody">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Health Screening Drawer -->
+    <div id="drawerOverlay" class="fixed inset-0 drawer-overlay hidden z-40" onclick="closeDrawer()"></div>
+    <div id="healthDrawer" class="fixed top-0 right-0 h-full w-full md:w-[750px] bg-white shadow-2xl z-50 drawer overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800" id="drawerCandidateName">Candidate Details</h2>
+                    <p class="text-sm text-gray-500" id="drawerOrderId">Order ID: -</p>
+                </div>
+                <button onclick="closeDrawer()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+
+            <!-- Internal Filters for the Screening Table -->
+            <div class="mb-6 flex gap-4">
+                <div class="relative flex-1">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" id="screeningSearch" onkeyup="filterScreeningTable()" placeholder="Search screenings (e.g. 5 Panel, Hep B)..." class="w-full pl-10 pr-4 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <select id="statusFilter" onchange="filterScreeningTable()" class="border rounded-md px-3 py-2 text-sm text-gray-600 bg-gray-50 focus:outline-none">
+                    <option value="">All Statuses</option>
+                    <option value="Clear">Clear</option>
+                    <option value="Review Needed">Review Needed</option>
+                    <option value="Unable to Verify">Unable to Verify</option>
+                    <option value="Canceled">Canceled</option>
+                </select>
+            </div>
+
+            <div class="border rounded-lg overflow-hidden border-blue-100">
+                <table class="w-full text-sm" id="screeningTable">
+                    <thead class="bg-blue-50">
+                        <tr class="text-left text-gray-700">
+                            <th class="p-3 border-b border-r border-blue-100 font-bold w-1/3">Health Screening</th>
+                            <th class="p-3 border-b border-r border-blue-100 font-bold w-1/3">Order Status</th>
+                            <th class="p-3 border-b border-blue-100 font-bold w-1/3">Suborder Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="screeningDetailsBody">
+                        <!-- Data structured 1-to-1 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                <button onclick="closeDrawer()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md font-medium hover:bg-gray-300 transition-colors">Close Details</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const candidates = [
+            { name: "Autopaatest Done", orderId: "K1MOC", lastRun: "02/23/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "AutoPAA and Market...", status: "COI Expired", statusClass: "status-coi-expired", alert: "Insurance document h...", alertClass: "text-red-500" },
+            { name: "Depdedentflow Test", orderId: "AYWT4", lastRun: "02/23/2026", dateAdded: "02/12/2026", expected: "", created: "mrunali Stage...", package: "stg1-ssn, mvr stg2-n...", status: "In Progress", statusClass: "status-in-progress", staged: "Stage1", alert: "Donor Pass Expired", alertClass: "text-red-500" },
+            { name: "Stagecheck Test", orderId: "JM755", lastRun: "02/23/2026", dateAdded: "02/12/2026", expected: "03/31/2026", created: "mrunali Stage...", package: "stg1-ssn, mvr stg2- c...", status: "In Progress", statusClass: "status-in-progress", staged: "Stage1", alert: "Donor Pass Expired", alertClass: "text-red-500" },
+            { name: "Rodrigo Joseph", orderId: "UTMUZ", lastRun: "02/19/2026", dateAdded: "02/18/2026", expected: "02/26/2026", created: "debendu Roy", package: "federal crim", status: "In Progress", statusClass: "status-in-progress", staged: "", alert: "", alertClass: "" },
+            { name: "Anup3 Kumar", orderId: "ZVZO9", lastRun: "02/18/2026", dateAdded: "02/18/2026", expected: "", created: "testing Covid", package: "federal crim", status: "In Progress", statusClass: "status-in-progress", staged: "", alert: "", alertClass: "" },
+            { name: "Criminalhistory Test", orderId: "J51FP", lastRun: "02/13/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "County crim, state crl...", status: "Reviewed", statusClass: "status-reviewed", staged: "", alert: "", alertClass: "" },
+            { name: "Paaemall Test", orderId: "YUGH4", lastRun: "02/13/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "preadvser flow pack...", status: "Adverse Action", statusClass: "status-adverse", staged: "", alert: "Dispute was not changed", alertClass: "text-red-500" },
+            { name: "Autopaano Test", orderId: "OPYRQ", lastRun: "02/13/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "Auto PAA with Color...", status: "Review Needed", statusClass: "status-review-needed", staged: "", alert: "", alertClass: "" }
+        ];
+
+        const screeningData = [
+            { category: "Drugs (4)", items: [
+                { name: "5 Panel Drug", order: "Clear", suborder: "Clear" },
+                { name: "7 Panel Drug", order: "Review Needed", suborder: "Review Needed" },
+                { name: "10 Panel Drug", order: "Unable to Verify", suborder: "Unable to Verify" },
+                { name: "Drug 20sep", order: "Canceled", suborder: "Canceled" }
+            ]},
+            { category: "Instant Drugs (2)", items: [
+                { name: "Instant 5 Panel", order: "Clear", suborder: "Clear" },
+                { name: "Instant 10 Panel", order: "Clear", suborder: "Clear" }
+            ]},
+            { category: "Titers (7)", items: [
+                { name: "Hep B Surface Antibody (HBsAb)", order: "Clear", suborder: "Clear" },
+                { name: "Hep B Surface Antigen (HBsAG)", order: "Review Needed", suborder: "Review Needed" },
+                { name: "Hepatitis B Surface Antibody", order: "Unable to Verify", suborder: "Unable to Verify" },
+                { name: "MMR Titer", order: "Clear", suborder: "Clear" },
+                { name: "QuantiFERON-TB Gold", order: "Canceled", suborder: "Canceled" }
+            ]},
+            { category: "Vaccines (5)", items: [
+                { name: "Flu Vaccine", order: "Clear", suborder: "Clear" },
+                { name: "MMR Vaccine", order: "Clear", suborder: "Clear" },
+                { name: "Covid-19 Booster", order: "Review Needed", suborder: "Review Needed" }
+            ]},
+            { category: "Additional Services (2)", items: [
+                { name: "Physical Exam", order: "Clear", suborder: "Clear" },
+                { name: "Vision Test", order: "Review Needed", suborder: "Review Needed" }
+            ]}
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('candidateTableBody');
+            tbody.innerHTML = candidates.map((c) => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3"><input type="checkbox" class="rounded"></td>
+                    <td class="p-3 font-medium text-blue-600 cursor-pointer hover:underline">${c.name}</td>
+                    <td class="p-3 text-gray-600">${c.orderId}</td>
+                    <td class="p-3 text-gray-600">${c.lastRun}</td>
+                    <td class="p-3 text-gray-600">${c.dateAdded}</td>
+                    <td class="p-3 text-gray-600">${c.expected}</td>
+                    <td class="p-3 text-gray-600">${c.created}</td>
+                    <td class="p-3 text-gray-600 truncate max-w-[120px]" title="${c.package}">${c.package}</td>
+                    <td class="p-3">
+                        <span class="status-badge ${c.statusClass}">${c.status}</span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <button onclick="openDrawer('${c.name}', '${c.orderId}')" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center m-auto border border-blue-200" title="View Detailed Screening">
+                            <i class="fas fa-info text-xs"></i>
+                        </button>
+                    </td>
+                    <td class="p-3 text-gray-600">${c.staged || ''}</td>
+                    <td class="p-3 ${c.alertClass}">${c.alert}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusColorClass(status) {
+            if (status.includes('Clear')) return 'status-text-clear';
+            if (status.includes('Review')) return 'status-text-review';
+            if (status.includes('Unable')) return 'status-text-unable';
+            if (status.includes('Cancel')) return 'status-text-canceled';
+            return 'text-gray-600';
+        }
+
+        function renderScreeningDetails() {
+            const tbody = document.getElementById('screeningDetailsBody');
+            let html = '';
+
+            screeningData.forEach(cat => {
+                html += `<tr class="bg-gray-50 font-semibold text-gray-600 category-row" data-category="${cat.category}">
+                    <td class="p-2 border-r border-b border-blue-100" colspan="3">${cat.category}</td>
+                </tr>`;
+
+                cat.items.forEach(item => {
+                    html += `<tr class="screening-item-row" data-name="${item.name.toLowerCase()}" data-status-order="${item.order}" data-status-sub="${item.suborder}">
+                        <td class="p-3 border-r border-b border-blue-100 pl-8 text-gray-700 font-medium">${item.name}</td>
+                        <td class="p-3 border-r border-b border-blue-100 ${getStatusColorClass(item.order)} font-semibold text-center">${item.order}</td>
+                        <td class="p-3 border-b border-blue-100 ${getStatusColorClass(item.suborder)} font-semibold text-center">${item.suborder}</td>
+                    </tr>`;
+                });
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function filterScreeningTable() {
+            const searchVal = document.getElementById('screeningSearch').value.toLowerCase();
+            const statusVal = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('.screening-item-row');
+            const catRows = document.querySelectorAll('.category-row');
+
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                const orderStatus = row.getAttribute('data-status-order');
+                const subStatus = row.getAttribute('data-status-sub');
+                const nameMatch = name.includes(searchVal);
+                const statusMatch = !statusVal || orderStatus === statusVal || subStatus === statusVal;
+
+                row.style.display = (nameMatch && statusMatch) ? '' : 'none';
+            });
+
+            catRows.forEach(catRow => {
+                let sibling = catRow.nextElementSibling;
+                let hasVisibleItems = false;
+                while (sibling && sibling.classList.contains('screening-item-row')) {
+                    if (sibling.style.display !== 'none') {
+                        hasVisibleItems = true;
+                        break;
+                    }
+                    sibling = sibling.nextElementSibling;
+                }
+                catRow.style.display = hasVisibleItems ? '' : 'none';
+            });
+        }
+
+        function openDrawer(name, id) {
+            document.getElementById('drawerCandidateName').innerText = name;
+            document.getElementById('drawerOrderId').innerText = `Order ID: ${id}`;
+            document.getElementById('drawerOverlay').classList.remove('hidden');
+            document.getElementById('healthDrawer').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('screeningSearch').value = '';
+            document.getElementById('statusFilter').value = '';
+            renderScreeningDetails();
+        }
+
+        function closeDrawer() {
+            document.getElementById('drawerOverlay').classList.add('hidden');
+            document.getElementById('healthDrawer').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        window.onload = renderTable;
+    </script>
+</body>
+</html>
