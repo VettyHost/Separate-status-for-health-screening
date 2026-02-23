@@ -28,8 +28,8 @@
         .status-review-needed { background-color: #fbbf24; color: white; }
 
         /* Detail Drawer Status Text Colors */
-        .status-text-clear { color: #2563eb; }
-        .status-text-in-progress { color: #6b7280; font-style: italic; }
+        .status-text-clear { color: #10b981; } /* Green */
+        .status-text-inprogress { color: #2563eb; } /* Blue, no gap */
         .status-text-review { color: #f97316; }
         .status-text-unable { color: #9ca3af; }
         .status-text-canceled { color: #ef4444; }
@@ -60,11 +60,10 @@
         <!-- Notification Bell -->
         <div class="relative cursor-pointer">
             <i class="fas fa-bell text-gray-400 text-xl"></i>
-            <!-- Hidden when count is 0 -->
             <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full px-1 hidden">0</span>
         </div>
 
-        <!-- Profile: User Name and Initials Circle -->
+        <!-- Profile Section -->
         <div class="flex items-center space-x-3 cursor-pointer border-l border-gray-100 pl-6">
             <span class="font-medium text-gray-700 text-sm">Debendu Roy</span>
             <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm">DR</div>
@@ -136,7 +135,7 @@
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase tracking-wider font-semibold">
-                        <th class="p-3 w-8"><input type="checkbox" class="rounded"></th>
+                        <th class="p-3 w-8"><input type="checkbox" class="rounded border-gray-300"></th>
                         <th class="p-3">Candidate</th>
                         <th class="p-3">Order ID</th>
                         <th class="p-3">Last Run <i class="fas fa-arrow-down ml-1"></i></th>
@@ -181,7 +180,7 @@
                     <select id="orderStatusFilter" onchange="filterScreeningTable()" class="w-full border rounded-md px-3 py-2 text-sm text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                         <option value="">All Order Statuses</option>
                         <option value="Clear">Clear</option>
-                        <option value="In Progress">In Progress</option>
+                        <option value="InProgress">InProgress</option>
                     </select>
                 </div>
                 <div>
@@ -196,7 +195,6 @@
                 </div>
             </div>
 
-            <!-- Health Screening Rule-Based Table -->
             <div class="border rounded-lg overflow-hidden border-blue-100 shadow-sm">
                 <table class="w-full text-sm" id="screeningTable">
                     <thead class="bg-blue-50">
@@ -219,7 +217,6 @@
     </div>
 
     <script>
-        // Main Dashboard Candidate Data
         const candidates = [
             { name: "Autopaatest Done", orderId: "K1MOC", lastRun: "02/23/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "AutoPAA and Market...", status: "COI Expired", statusClass: "status-coi-expired", alert: "Insurance document h...", alertClass: "text-red-500" },
             { name: "Depdedentflow Test", orderId: "AYWT4", lastRun: "02/23/2026", dateAdded: "02/12/2026", expected: "", created: "mrunali Stage...", package: "stg1-ssn, mvr stg2-n...", status: "In Progress", statusClass: "status-in-progress", staged: "Stage1", alert: "Donor Pass Expired", alertClass: "text-red-500" },
@@ -231,7 +228,6 @@
             { name: "Autopaano Test", orderId: "OPYRQ", lastRun: "02/13/2026", dateAdded: "02/13/2026", expected: "", created: "mrunali Stage...", package: "Auto PAA with Color...", status: "Review Needed", statusClass: "status-review-needed", staged: "", alert: "", alertClass: "" }
         ];
 
-        // Detailed Health Screening Data
         const screeningData = [
             { category: "Drugs (4)", items: [
                 { name: "5 Panel Drug", suborder: "Clear" },
@@ -280,7 +276,7 @@
 
         function getStatusColorClass(status) {
             if (status === 'Clear') return 'status-text-clear';
-            if (status === 'In Progress') return 'status-text-in-progress';
+            if (status === 'InProgress') return 'status-text-inprogress';
             if (status.includes('Review')) return 'status-text-review';
             if (status.includes('Unable')) return 'status-text-unable';
             if (status.includes('Cancel')) return 'status-text-canceled';
@@ -292,14 +288,13 @@
             let html = '';
 
             screeningData.forEach(cat => {
-                // Category row
                 html += `<tr class="bg-gray-100/50 font-bold text-gray-600 category-row" data-category="${cat.category}">
                     <td class="p-3 border-r border-b border-blue-100" colspan="3">${cat.category}</td>
                 </tr>`;
 
                 cat.items.forEach(item => {
-                    // APPLY LOGIC: Order is Clear ONLY IF Suborder is Clear. Otherwise, "In Progress".
-                    const orderStatus = (item.suborder === 'Clear') ? 'Clear' : 'In Progress';
+                    // LOGIC: Order is Clear ONLY IF Suborder is Clear. Otherwise, "InProgress" (no gap).
+                    const orderStatus = (item.suborder === 'Clear') ? 'Clear' : 'InProgress';
                     
                     html += `<tr class="screening-item-row" data-name="${item.name.toLowerCase()}" data-status-order="${orderStatus}" data-status-sub="${item.suborder}">
                         <td class="p-3 border-r border-b border-blue-100 pl-8 text-gray-700 font-medium">${item.name}</td>
@@ -332,7 +327,6 @@
                 row.style.display = (nameMatch && orderMatch && suborderMatch) ? '' : 'none';
             });
 
-            // Logic to hide category headers if all items within them are filtered out
             catRows.forEach(catRow => {
                 let sibling = catRow.nextElementSibling;
                 let hasVisibleItems = false;
@@ -354,7 +348,6 @@
             document.getElementById('healthDrawer').classList.add('open');
             document.body.style.overflow = 'hidden';
             
-            // Clear drawer filters upon entry
             document.getElementById('screeningSearch').value = '';
             document.getElementById('orderStatusFilter').value = '';
             document.getElementById('suborderStatusFilter').value = '';
